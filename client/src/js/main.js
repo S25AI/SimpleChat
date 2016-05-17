@@ -43,7 +43,7 @@ function renderMessage(msg) {
 }
 
 function sendAjax(url, data) {
-	return fetch(url, {
+	fetch(url, {
 		method: 'POST',
 		body: JSON.stringify(data)
 	});
