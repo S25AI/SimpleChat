@@ -5,23 +5,28 @@ const fs = require('fs');
 
 const basePath = `${__dirname}/client/src/`;
 
-let messagesArr = [];
+let encodedMsgList = fs.readFileSync( `${__dirname}/msg.json` ).toString();
+let messagesArr = encodedMsgList ? JSON.parse( encodedMsgList ) : [];
 
 const processData = (req, res) => {
-	let data;
+	let data = '';
+	let encodedMessageArr;
 
 	req.on('data', chunk => {
 		data += chunk;
 	});
 
 	req.on('end', () => {
-		data = data || "[]";
-		data = JSON.parse(data); //data is Array
-		messagesArr = messagesArr.concat(data);
+		if (data) {
+			data = JSON.parse(data);
+			messagesArr.push(data);
+		} 
+		res.writeHead(200, {'Content-Type': 'application/json'});
+		encodedMessageArr = JSON.stringify(messagesArr);
+		fs.writeFile(`${__dirname}/msg.json`, encodedMessageArr);
+		res.write(encodedMessageArr);
+		res.end();
 	});
-
-	res.write( JSON.stringify(messagesArr) );
-	res.end();
 };
 
 const routes = {
@@ -79,7 +84,9 @@ const server = http.createServer((req, res) => {
 
 	if (path.sendStatic) sendFile(path.url, res);
 
-	path.processData(req, res);
+	if (req.url === '/') {
+		processData(req, res);
+	}
 });
 
 server.listen(3000);
