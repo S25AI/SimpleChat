@@ -6,14 +6,15 @@
 	<link rel="stylesheet" href="/style">
 </head>
 <body>
-	<h2>Simple chat page</h2>
-	<div id="chatContainer">
-		<h2>This is chat</h2>
-		<form name="chatform" action="/">
-			<input type="text" name="message" placeholder="enter a message" require>
-			<input type="submit" value="Send message">
-		</form>
-		<ul id="chatList"></ul>
+	<div class="wrapper">
+		<h2>Simple chat page</h2>
+		<div id="chatContainer">
+			<form name="chatform" action="/">
+				<input class="msg-enter" type="text" name="message" placeholder="enter a message" require>
+				<input class="msg-send" type="submit" value="Send message">
+			</form>
+			<ul class="msg-list" id="chatList"></ul>
+		</div>
 	</div>
 	<script src="/main"></script>
 </body>

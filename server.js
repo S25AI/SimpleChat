@@ -7,6 +7,7 @@ const basePath = `${__dirname}/client/src/`;
 
 let encodedMsgList = fs.readFileSync( `${__dirname}/msg.json` ).toString();
 let messagesArr = encodedMsgList ? JSON.parse( encodedMsgList ) : [];
+let clients = [];
 
 const processData = (req, res) => {
 	let data = '';
@@ -20,20 +21,50 @@ const processData = (req, res) => {
 		if (data) {
 			data = JSON.parse(data);
 			messagesArr.push(data);
-		} 
-		res.writeHead(200, {'Content-Type': 'application/json'});
+		}
+
 		encodedMessageArr = JSON.stringify(messagesArr);
 		fs.writeFile(`${__dirname}/msg.json`, encodedMessageArr);
-		res.write(encodedMessageArr);
-		res.end();
+
+		clients.forEach(answer => {
+			answer.writeHead(200, {'Content-Type': 'application/json'});
+			answer.write( JSON.stringify(data) );
+			answer.end();
+		});
+
+		clients = [];
 	});
 };
+
+function addClients(req, res) {
+	clients.push(res);
+}
+
+function sendJson(req, res) {
+	let data = fs.readFileSync(`${__dirname}/msg.json`);
+	if (!data.length) return false;
+	res.writeHead(200, {'Content-Type': 'application/json'});
+	res.write( String( data ));
+	res.end();
+}
 
 const routes = {
 	'/': {
 		url: '/',
 		sendStatic: false,
 		processData
+	},
+
+	'/subscribe': {
+		url: '/subscribe',
+		sendStatic: false,
+		addClients
+	},
+
+	'/msg': {
+		url: `${basePath}msg.json`,
+		sendStatic: false,
+		sendJson
 	},
 
 	'/index': {
@@ -86,6 +117,14 @@ const server = http.createServer((req, res) => {
 
 	if (req.url === '/') {
 		processData(req, res);
+	}
+
+	if (req.url === '/subscribe') {
+		addClients(req, res);
+	}
+
+	if (req.url === '/msg') {
+		sendJson(req, res);
 	}
 });
 
