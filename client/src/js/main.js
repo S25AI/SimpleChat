@@ -6,16 +6,25 @@ const messageInput = form.elements.message;
 const log = console.log.bind(console);
 let msgArr = [];
 
-fetch('/', { method: 'POST' })
-	.then(res => res.json())
-	.then(data => {
-		if (!data) return false;
-		msgArr = data;
-		renderList();
-	})
-	.catch(log);
+function uploadMessages(url, action, callback) {
+	fetch(url, {method: 'GET'})
+		.then(res => res.json())
+		.then(data => {
+			if (!data) return false;
+			msgArr = data;
+			action(data);
+			if (callback) callback();
+		})
+		.catch(log);
+}
 
-const timerId = setInterval(sendAjax, 5000, '/');
+uploadMessages('/msg', renderList);
+
+function subscribe() {
+	uploadMessages('/subscribe', addItem, subscribe);
+}
+
+subscribe();
 
 const elt = (el = 'div', cls = '', text = '') => {
 	let elem = document.createElement(el);
@@ -26,9 +35,20 @@ const elt = (el = 'div', cls = '', text = '') => {
 
 function renderList() {
 	msgArr.forEach(item => {
-		let li = elt('li', '', item);
+		let date = makeBeautyDate(item.date);
+		let li = elt('li', 'msg-item', item.val);
+		let msgDate = elt('span', 'msg-date', date);
+		li.appendChild(msgDate);
 		chatList.appendChild(li);
 	});
+}
+
+function addItem(item) {
+	let date = makeBeautyDate(item.date);
+	let li = elt('li', 'msg-item', item.val);
+	let msgDate = elt('span', 'msg-date', date);
+	li.appendChild(msgDate);
+	chatList.appendChild(li);
 }
 
 form.onsubmit = submitHandler;
@@ -41,19 +61,12 @@ function submitHandler(e) {
 		return false;
 	}
 
-	let msg = messageInput.value;
+	let msg = {
+		val: messageInput.value,
+		date: Date.now()
+	};
 
-	fetch('/', {
-			method: 'POST',
-			body: JSON.stringify(msg)
-		})
-		.then(res => res.json())
-		.then(data => {
-			msgArr = data;
-			refreshList();
-		})
-		.catch(log);
-
+	sendAjax('/', msg);
 	clearInput(messageInput);
 	setFocusToInput(messageInput);
 }
@@ -64,10 +77,13 @@ function refreshList() {
 		chatList.removeChild(el);
 	}
 
-	msgArr.forEach(item => {
-		let li = elt('li', '', item);
-		chatList.appendChild(li);
-	});
+	renderList();
+}
+
+function makeBeautyDate(date) {
+	date = new Date(date);
+	return `created on ${date.getDate()} may
+					${date.getHours()}:${date.getMinutes()}`;
 }
 
 function sendAjax(url, msg) {
@@ -83,7 +99,6 @@ function sendAjax(url, msg) {
 		})
 		.catch(() => {
 			log('some error confused');
-			clearInterval(timerId);
 		});
 }
 
@@ -94,9 +109,3 @@ function clearInput(input) {
 function setFocusToInput(input) {
 	input.focus();
 }
-
-/*function renderMessage(msg) {
-	let li = elt('li', 'msg-list-item', msg);
-	chatList.appendChild(li);
-}*/
-
