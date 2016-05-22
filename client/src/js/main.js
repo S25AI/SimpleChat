@@ -4,27 +4,8 @@ const form = document.forms.chatform;
 const chatList = document.querySelector('#chatList');
 const messageInput = form.elements.message;
 const log = console.log.bind(console);
-let msgArr = [];
 
-function uploadMessages(url, action, callback) {
-	fetch(url, {method: 'GET'})
-		.then(res => res.json())
-		.then(data => {
-			if (!data) return false;
-			msgArr = data;
-			action(data);
-			if (callback) callback();
-		})
-		.catch(log);
-}
-
-uploadMessages('/msg', renderList);
-
-function subscribe() {
-	uploadMessages('/subscribe', addItem, subscribe);
-}
-
-subscribe();
+init();
 
 const elt = (el = 'div', cls = '', text = '') => {
 	let elem = document.createElement(el);
@@ -33,7 +14,20 @@ const elt = (el = 'div', cls = '', text = '') => {
 	return elem;
 };
 
-function renderList() {
+function init() {
+	uploadMessages('/msg.json', renderList);
+	form.onsubmit = submitHandler;
+}
+
+function clearInput(input) {
+	input.value = '';
+}
+
+function setFocusToInput(input) {
+	input.focus();
+}
+
+function renderList(msgArr) {
 	msgArr.forEach(item => {
 		let date = makeBeautyDate(item.date);
 		let li = elt('li', 'msg-item', item.val);
@@ -51,7 +45,11 @@ function addItem(item) {
 	chatList.appendChild(li);
 }
 
-form.onsubmit = submitHandler;
+function makeBeautyDate(date) {
+	date = new Date(date);
+	return `created on ${date.getDate()} may
+					${date.getHours()}:${date.getMinutes()}`;
+}
 
 function submitHandler(e) {
 	e.preventDefault();
@@ -66,46 +64,40 @@ function submitHandler(e) {
 		date: Date.now()
 	};
 
-	sendAjax('/', msg);
+	console.log(msg);
+
+	sendAjax('/request', msg);
 	clearInput(messageInput);
 	setFocusToInput(messageInput);
 }
 
-function refreshList() {
-	let el;
-	while( el = chatList.children[0] ) {
-		chatList.removeChild(el);
-	}
-
-	renderList();
-}
-
-function makeBeautyDate(date) {
-	date = new Date(date);
-	return `created on ${date.getDate()} may
-					${date.getHours()}:${date.getMinutes()}`;
+function uploadMessages(url, action) {
+	fetch(url, {method: 'GET'})
+		.then(res => res.json())
+		.then(data => {
+			if (!data) return false;
+			action(data);
+			subscribe('/subscribe', addItem);
+		})
+		.catch(log);
 }
 
 function sendAjax(url, msg) {
-	let body = msg ? JSON.stringify(msg) : null;
 	fetch(url, {
-			method: 'POST',
-			body: body
-		})
+		method: 'POST',
+		body: JSON.stringify(msg)
+	})
+		.catch(log);
+}
+
+function subscribe(url, action) {
+	fetch(url, {method: 'GET'})
 		.then(res => res.json())
 		.then(data => {
-			msgArr = data;
-			refreshList();
+			action(data);
+			subscribe(url, action);
 		})
 		.catch(() => {
-			log('some error confused');
+			log();
 		});
-}
-
-function clearInput(input) {
-	input.value = '';
-}
-
-function setFocusToInput(input) {
-	input.focus();
 }
