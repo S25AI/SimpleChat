@@ -1,7 +1,8 @@
 'use strict';
 
 const port = 3000;
-console.log('and now this text')
+
+const http = require('http');
 const fs = require('fs');
 const chat = require('./chat');
 
