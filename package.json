@@ -10,5 +10,8 @@
     "chat"
   ],
   "author": "Dmitry Silvestrov",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "minimatch": "^3.0.3"
+  }
 }
