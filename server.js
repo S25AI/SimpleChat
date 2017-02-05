@@ -8,6 +8,8 @@ const chat = require('./chat');
 const stream = require('stream');
 const basePath = `${__dirname}/client/src/`;
 
+const WARNING = 'OOOppppssss!!!';
+
 const sendFile = (url, res, type) => {
 	let fileData = fs.readFileSync(url, res);
 	type = type || 'text/plain';
